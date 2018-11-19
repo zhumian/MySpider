@@ -1,29 +1,29 @@
 from urllib.request import urlopen
-import requests
+import requests, logging
 from bs4 import BeautifulSoup
-from mysql import DBSession, RentingHouse
+from db import DBSession, RentingHouse
 from util import getNow, str2datetime
-
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36",
-}
-proxy_dict = {
-    "http": "http://219.135.170.187:45190/",
-    "https": "http://219.135.170.187:45190/"
-}
+from proxyip import user_agent_list,get_headers
+import proxyip
 
 
-def spider(url, start):
+def find_zufang(url, start, proxy_url):
     res = None
+    proxies = {
+        'http': "http://" + proxy_url,
+        'https:': "https://" + proxy_url
+    }
+    headers = get_headers()
     try:
         url = "%s?start=%s" % (url, start)
-        res = requests.get(url, headers=headers)
+        res = requests.get(url, headers=headers, proxies=proxies)
     except Exception as e:
-        print(e)
+        logging.error(e)
     if res is None:
-        print("URL is not found")
+        pass
     elif res.status_code == 403:
-        print("403错误")
+        proxyip.proxy_url_pool.remove(proxy_url)
+        logging.info("代理地址 : " + proxy_url + "已失效, 当前代理池地址数 : " + len(proxyip.proxy_url_pool))
     else:
         bsObj = BeautifulSoup(res.text, "html.parser", from_encoding='utf-8')
         rows = bsObj.find("table", {"class": "olt"}).findAll("tr", {"class": ""})
@@ -56,16 +56,7 @@ def spider(url, start):
                 session.add(item)
                 session.commit()
             except Exception as e:
-                print(e)
+                logging.error(e)
             session.close()
 
 
-def main():
-    u = "https://www.douban.com/group/tianhezufang/discussion"
-    count = 100
-    for i in range(count):
-        spider(u, i * 25)
-
-
-if __name__ == "__main__":
-    main()
