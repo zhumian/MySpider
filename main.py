@@ -1,38 +1,49 @@
-from proxyip import find_proxy_ip
-import threading, logging, random, time
-import proxyip
-from douban_zufang import find_zufang
+import logging
+import threading
+import time
+import random
+from apscheduler.schedulers.background import BackgroundScheduler
+import balcklist
+import proxy_api
+from douban_zufang import find_zufang, url_list
+
 logging.basicConfig(level=logging.INFO)
 
 
-
-def start_find_proxy_ip():
-    logging.info("开始爬取西刺代理IP")
-    url = 'http://www.xicidaili.com/nn/'
-    for num in range(3000):
-        find_proxy_ip(url, num)
-        time.sleep(5)
-
-
-def start_find_douban_zufang():
-    logging.info("开始搜寻豆瓣租房信息")
-    url = "https://www.douban.com/group/tianhezufang/discussion"
+def start_find_douban_zufang(area, url, size):
     page = 0
-    while True:
-        if len(proxyip.proxy_url_pool) > 4 :
-            proxy_url = random.choice(proxyip.proxy_url_pool)
-            find_zufang(url, page * 25, proxy_url)
-            page += 1
-            time.sleep(5)
-        else:
-            time.sleep(10)
+    while page < size:
+        proxy_url = proxy_api.get()
+        if proxy_url:
+            result = find_zufang(area, url, page * 25, proxy_url)
+            if result:
+                page += 1
+            time.sleep(random.randint(1, 10))
 
 
 if __name__ == '__main__':
+    balcklist.loadBlackList()
+    sched = BackgroundScheduler()
+    for i in url_list:
+        area = i['area']
+        url = i['url']
+        sched.add_job(start_find_douban_zufang, 'interval', minutes=1, args=(area, url, 1))
+    sched.start()
+
+    while True:
+        time.sleep(5)
+    '''
     threads = []
-    t2 = threading.Thread(target=start_find_douban_zufang)
-    t1 = threading.Thread(target=start_find_proxy_ip)
-    threads.append(t1)
-    threads.append(t2)
+    for i in url_list:
+        area = i['area']
+        url = i['url']
+        t = threading.Thread(target=start_find_douban_zufang, args=(area, url, 1))
+        threads.append(t)
     for t in threads:
         t.start()
+    for t in threads:
+        t.join()
+    '''
+
+
+

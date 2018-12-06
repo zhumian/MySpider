@@ -1,5 +1,4 @@
-import random, requests, os, logging
-from bs4 import BeautifulSoup
+import random
 
 user_agent_list = [
     "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/22.0.1207.1 Safari/537.1",
@@ -21,44 +20,13 @@ user_agent_list = [
     "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24"
 ]
 
-proxy_url_pool = []
+
+def getUserAgent():
+    return random.choice(user_agent_list)
 
 
-def get_headers():
-    user_agent = random.choice(user_agent_list)
-    headers = {'User-agent': user_agent}
-    return headers
-
-
-def find_proxy_ip(url, page):
-    url = url + str(page)
-    headers = get_headers()
-    html = requests.get(url=url, headers=headers, timeout=5)
-    soup = BeautifulSoup(html.text, 'lxml')
-    trs = soup.findAll("tr", {"class": "odd"})
-    for item in trs:
-        tds = item.findAll("td")
-        proxy_url = tds[1].text + ":" + tds[2].text
-        if check_ip(proxy_url):
-            global proxy_url_pool
-            proxy_url_pool.append(proxy_url)
-            logging.info("搜寻到有效代理地址 : " + proxy_url)
-            logging.info("当前代理池地址数 : " + str(len(proxy_url_pool)))
-
-
-def check_ip(url):
-    headers = get_headers()
-    proxies = {
-        'http': "http://" + url,
-        'https:': "https://" + url
+def getHeaders():
+    user_agent = getUserAgent()
+    headers = {
+        'User-Agent': user_agent
     }
-    target_url = "http://www.baidu.com"
-    try:
-        response = requests.get(url=target_url, proxies=proxies, headers=headers, timeout=5)
-        status_code = response.status_code
-        if status_code == 200:
-            return True
-        else:
-            return False
-    except Exception as e:
-        return False
