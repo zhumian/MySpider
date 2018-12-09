@@ -24,7 +24,6 @@ url_list = [
 def find_zufang(area, url, start, proxy_url):
     res = None
     proxies = {
-        'http': "http://" + proxy_url,
         'https:': "https://" + proxy_url
     }
     headers = HttpUtil.getHeaders()
@@ -32,6 +31,8 @@ def find_zufang(area, url, start, proxy_url):
         url = "%s?start=%s" % (url, start)
         logging.info("开始爬取 : " + url)
         res = requests.get(url, headers=headers, proxies=proxies, timeout=10)
+        cookies = res.cookies
+        logging.info("cookies : {cookies}".format(cookies=cookies))
     except Exception as e:
         logging.error(e)
         return False
