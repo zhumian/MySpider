@@ -1,38 +1,27 @@
 from urllib.request import urlopen
-import requests, logging
+
+import logging
+import requests
 from bs4 import BeautifulSoup
+
+import balcklist
+import proxy_api
+import util.HttpUtil as HttpUtil
 from db import DBSession, Dbzf
 from util.DateUtil import getNow, str2datetime
-import util.HttpUtil as HttpUtil
-import proxy_api
-import balcklist
 
 
-url_list = [
-    {"area": "天河区", 'url': "https://www.douban.com/group/tianhezufang/discussion"},
-    {"area": "海珠区", 'url': "https://www.douban.com/group/haizhuzufang/discussion"},
-    {"area": "越秀区", 'url': "https://www.douban.com/group/yuexiuzufang/discussion"},
-    {"area": "番禺区", 'url': "https://www.douban.com/group/panyuzufang/discussion"},
-    {"area": "荔湾区", 'url': "https://www.douban.com/group/liwanzufang/discussion"},
-    {"area": "3/5号线", 'url': "https://www.douban.com/group/huangpuzufang/discussion"},
-    {"area": "天河区", 'url': "https://www.douban.com/group/606174/discussion"},
-    {"area": None, 'url': "https://www.douban.com/group/maquezufang/discussion"},
-    {"area": None, 'url': "https://www.douban.com/group/532699/discussion"},
-]
-
-
-def find_zufang(area, url, start, proxy_url):
+def find_zufang(area, url, start):
     res = None
+    proxy_url = proxy_api.get()
     proxies = {
         'https:': "https://" + proxy_url
     }
     headers = HttpUtil.getHeaders()
     try:
         url = "%s?start=%s" % (url, start)
-        logging.info("开始爬取 : " + url)
+        logging.info("start spider [page:{url}] [proxy:{proxy}]".format(url=url, proxy=proxy_url))
         res = requests.get(url, headers=headers, proxies=proxies, timeout=10)
-        cookies = res.cookies
-        logging.info("cookies : {cookies}".format(cookies=cookies))
     except Exception as e:
         logging.error(e)
         return False
@@ -84,7 +73,7 @@ def find_zufang(area, url, start, proxy_url):
                     except Exception as e:
                         logging.error(e)
             else:
-                logging.info("找不到table")
+                logging.info("table not found")
                 return False
 
     return True
@@ -96,5 +85,9 @@ def validate(title):
         if value in title:
             return False
     return True
+
+
+def run(area, url, start):
+    find_zufang(area, url, start)
 
 

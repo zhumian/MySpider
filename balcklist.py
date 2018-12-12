@@ -1,5 +1,4 @@
 from db import DBSession, Dict
-import logging
 
 blacklist = []
 

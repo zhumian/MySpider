@@ -28,5 +28,14 @@ def getUserAgent():
 def getHeaders():
     user_agent = getUserAgent()
     headers = {
-        'User-Agent': user_agent
+        'User-Agent': user_agent,
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        'Referer': 'www.baidu.com',
+        'Host': 'www.douban.com',
+        "Origin": "https://www.douban.com",
+        'Accept': "*/*",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
+        'Connection': 'keep-alive',
     }
+    return headers
